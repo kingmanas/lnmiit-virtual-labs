@@ -1,0 +1,22 @@
+version: '3'
+services:
+  # Configuration for Hub+Proxy
+  jupyterhub:
+    build: .                # Build the container from this folder.
+    container_name: jupyterhub_hub   # The service will use this container name.
+    volumes:                         # Give access to Docker socket.
+      - /var/run/docker.sock:/var/run/docker.sock
+      - jupyterhub_data:/srv/jupyterlab
+    environment:                     # Env variables passed to the Hub process.
+      DOCKER_JUPYTER_IMAGE: jupyter/tensorflow-notebook
+      DOCKER_NETWORK_NAME: ${COMPOSE_PROJECT_NAME}_default
+      HUB_IP: jupyterhub_hub
+    ports:
+      - 8000:8000
+    restart: unless-stopped
+  # Configuration for the single-user servers
+  jupyterlab:
+    image: jupyter/tensorflow-notebook
+    command: echo
+volumes:
+  jupyterhub_data:

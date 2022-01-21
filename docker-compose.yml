@@ -1,0 +1,82 @@
+version: "1.0"
+
+services:
+  api_server:
+    build: ./backend/api
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - PORT=8001
+    ports:
+      - 8001:8001
+    depends_on:
+      - mongo
+      - redis
+    volumes:
+      - type: bind
+        source: ./backend/api
+        target: /api
+
+  frontend_server:
+    build: ./frontend
+    restart: always
+    environment:
+      - PORT=3000
+    ports:
+      - 3000:3000
+    depends_on:
+      - api_server
+    volumes:
+      - type: bind
+        source: ./frontend
+        target: /frontend
+
+  checker:
+    build: ./checker
+    restart: always
+    environment:
+      - PORT=9000
+    depends_on:
+      - api_server
+      - mongo
+      - redis
+    volumes:
+      - type: bind
+        source: ./checker
+        target: /checker
+
+  # code_evaluator:
+  #   build: ./backend/code_evaluator
+  #   environment:
+  #     - PORT=8083
+  #   ports:
+  #     - 8083:8083
+  #   depends_on:
+  #     - redis
+  #     - mongo
+
+  mongo_express:
+    image: mongo-express
+    restart: always
+    env_file:
+      - ./backend/webconfig.env
+    ports:
+      - 8081:8081
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:latest
+    restart: always
+    env_file:
+      - ./backend/webconfig.env
+    ports:
+      - 27017:27017
+    volumes:
+      - ./backend/data:/data/db
+
+  redis:
+    image: redis:latest
+    restart: always
+    ports:
+      - 6379:6379

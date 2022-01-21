@@ -1,0 +1,39 @@
+.profile {
+  display: block;
+  border: 1px solid #b9b9b9;
+  border-radius: 2em;
+  padding: 1.5em;
+  margin-left: 1em;
+  margin-right: 1em;
+  list-style: none;
+  position: relative;
+}
+
+.user-info {
+  position: relative;
+  float: left;
+  width: 40%;
+}
+
+.user-info ul {
+  list-style-type: none;
+}
+
+.user-info ul {
+  list-style-type: none;
+}
+
+.profile-image {
+  width: 60%;
+  overflow: hidden;
+  border: 1px solid #b9b9b9;
+  height: 200px;
+  width: 70%;
+  padding: 12.5px;
+  position: relative;
+  margin-bottom: 1em;
+}
+
+.profile-left {
+  width: 10%;
+}
