@@ -9,26 +9,22 @@ const validator = require("validator");
 const { OAuth2Client } = require("google-auth-library");
 
 function generateAccessToken(username, verifyToken, callback_) {
-  User.findOne({ username: username }, (err, _) => {
+  User.findOne({ username: username }, (err, docs) => {
     if (err && verifyToken == true) {
       console.log(username + " USER_NOT_FOUND");
       return callback_(err, null);
     } else {
       try {
         const token = jwt.sign(
-          { username: username, role: "STUDENT" },
+          { username: docs.username, role: docs.role },
           config.jwt_signing_key,
           {
             algorithm: "HS256",
             expiresIn: config.jwt_expiry_time,
           }
         );
-        const encrypted_token = crypto_js.AES.encrypt(
-          token,
-          config.cookie_encryption_key
-        ).toString();
 
-        callback_(null, encrypted_token);
+        callback_(null, token);
       } catch (err) {
         callback_(err, null);
       }
@@ -40,8 +36,6 @@ function generateRefreshToken(username, expireTime, callback_) {
   expireTime = expireTime || 6 * 60 * 60;
 
   const refresh_token = crypto.randomBytes(64).toString("hex");
-
-  console.log({ redis: "redis", username, refresh_token });
 
   try {
     redis.set(
@@ -59,7 +53,7 @@ function generateRefreshToken(username, expireTime, callback_) {
 function tokenUtility(req, verifyUser, res) {
   verifyUser = verifyUser || true;
 
-  const username = req.body.username;
+  const username = req.username;
 
   generateAccessToken(username, verifyUser, (err, access_token) => {
     if (err) {
@@ -75,7 +69,6 @@ function tokenUtility(req, verifyUser, res) {
 
     generateRefreshToken(username, null, (err, refresh_token) => {
       if (err) {
-        console.log("DD");
         console.log(err);
         res.status(403).send("REFRESH_TOKEN_FAILED");
         return;
@@ -87,7 +80,6 @@ function tokenUtility(req, verifyUser, res) {
       });
 
       console.log(`${username} logged in.`);
-
       res.json({ username: username });
       res.send();
     });
@@ -114,8 +106,7 @@ module.exports = {
       );
     } catch (err) {
       console.log(err);
-      res.send(403, "EMAIL_VERIFICATION_FAILED");
-      return;
+      return res.send(403, "EMAIL_VERIFICATION_FAILED");
     }
     res.send(200, "EMAIL_VERIFIED");
   },
@@ -129,25 +120,22 @@ module.exports = {
       const name = `${req.body.first_name}${req.body.last_name}`;
 
       if (!validator.isEmail(email)) {
-        res.send(403, "INVALID_EMAIL");
-        return;
+        return res.send(403, "INVALID_EMAIL");
       }
 
       if (!validator.isAlphanumeric(name) || name.length < 1) {
-        res.send(403, "INVALID_NAME");
-        return;
+        return res.send(403, "INVALID_NAME");
       }
 
       // find if the username is already present
       try {
         const userQuery = await User.find({ username: username });
         if (userQuery != null && userQuery.email_verified == false) {
-          res.send(403, "USERNAME_UNAVAILABLE");
+          return res.send(403, "USERNAME_UNAVAILABLE");
         }
       } catch (err) {
         console.log(err);
-        res.send(403, "SERVER_FAULT_1");
-        return;
+        return res.send(403, "SERVER_FAULT_1");
       }
 
       try {
@@ -158,7 +146,7 @@ module.exports = {
         }).save();
       } catch (err) {
         console.log(err);
-        res.send(403, "SERVER_FAULT_2");
+        return res.send(403, "SERVER_FAULT_2");
       }
 
       try {
@@ -175,14 +163,12 @@ module.exports = {
         res.json({ verify: verificationLink });
         res.send();
       } catch (err) {
-        res.send(403, "CACHE_FAULT");
         console.log(err);
-        return;
+        return res.send(403, "CACHE_FAULT");
       }
     } catch (err) {
-      res.send(403, "UNEXPECTED_ERROR");
       console.log(err);
-      return;
+      return res.send(403, "UNEXPECTED_ERROR");
     }
   },
 
@@ -191,7 +177,7 @@ module.exports = {
     const passwd = req.body.passwd;
 
     if (!validator.isAlphanumeric(username)) {
-      res.send(403, "INVALID_USERNAME");
+      res.status(403).send("INVALID_USERNAME");
       return;
     }
 
@@ -213,13 +199,24 @@ module.exports = {
   // access token via token rotation
   refresh: (req, res) => {
     let refreshToken = req.cookies["x-refresh-token"];
-    console.log(redis.get(refreshToken));
-    if (redis.get(refreshToken).username != req.username) {
-      res.clearCookie("x-refresh-token");
-      res.clearCookie("x-access-token");
-      res.status(401).send({ message: "REFRESH_TOKEN_NOT_FOUND_IN_DB" });
-      return;
-    }
+
+    if (!refreshToken) return res.send(401).status("NO_REFRESH_TOKEN_PROVIDED");
+
+    redis.get(refreshToken, (err, val) => {
+      if (err) {
+        res.clearCookie("x-refresh-token");
+        res.clearCookie("x-access-token");
+        return res
+          .status(401)
+          .send({ message: "REFRESH_TOKEN_NOT_FOUND_IN_DB" });
+      }
+      if (val != req.username) {
+        return res
+          .status(401)
+          .send({ message: "REFRESH_TOKEN_NOT_FOUND_IN_DB" });
+      }
+    });
+
     tokenUtility(req, null, res);
     return;
   },
@@ -236,37 +233,40 @@ module.exports = {
       const { email, name, picture, email_verified } = ticket.getPayload();
       const username = email.substring(0, email.lastIndexOf("@"));
 
-      console.log(
-        `${username} ${name} ${email_verified} logged in with google.`
-      );
+      console.log({ username, name, email_verified });
 
-      User.findOne({ username: username }, (err, docs) => {
-        if (err) {
-          throw err;
-        }
-        try {
-          User.updateOne({
+      try {
+        User.updateOne(
+          { username: username },
+          {
             username: username,
             email: email,
             email_verified: email_verified,
             name: name,
             picture: picture,
-          });
-        } catch (err) {
-          throw err;
-        }
+          },
+          { upsert: true }
+        );
+      } catch (err) {
+        throw err;
+      }
+
+      req.username = username;
+
+      User.findOne({ username: username }, (err, docs) => {
+        if (err) return;
+        req.role = docs.role;
+        console.log(req.role);
       });
 
-      tokenUtility(req, false, res);
-      return;
+      return tokenUtility(req, false, res);
     } catch (err) {
-      res.status(403).send("GAUTH_ERROR");
+      return res.status(403).send("GAUTH_ERROR");
     }
   },
 
   logout: (req, res) => {
     let refreshToken = req.cookies["x-refresh-token"];
-    console.log(req.cookies);
     if (!refreshToken) {
       res.status(200).send("ALREADY_LOGGED_OUT");
       return;
@@ -279,7 +279,7 @@ module.exports = {
       return;
     }
 
-    console.log(`${req.body.username} logged out.`);
+    console.log(`${req.username} logged out.`);
 
     res.clearCookie("x-access-token");
     res.clearCookie("x-refresh-token");

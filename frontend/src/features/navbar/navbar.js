@@ -11,6 +11,7 @@ import axios from "axios";
 import {
   Divider,
   List,
+  ListItemButton,
   ListItem,
   ListItemIcon,
   ListItemText,
@@ -25,7 +26,8 @@ import HomeIcon from "@mui/icons-material/Home";
 import LogoutIcon from "@mui/icons-material/Logout";
 import MenuIcon from "@mui/icons-material/Menu";
 import ScienceIcon from "@mui/icons-material/Science";
-import { AuthContext } from "../../authContext";
+import { AuthContext } from "../../contexts/authContext";
+
 function NavBarMid() {
   return (
     <div className="navbar-middle">
@@ -67,25 +69,11 @@ export default function NavBar(props) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  function logout() {
-    axios({
-      url: "http://api_server/auth/logout",
-      method: "get",
-      withCredentials: true,
-    })
-      .then((res) => {
-        console.log(res);
-      })
-      .catch((err) => console.log(err));
-
-    setCurrentUser(null);
-    setIsLoading(false);
-    navigate("/", { replace: true });
-  }
-
   const iOS =
     typeof navigator !== "undefined" &&
     /iPad|iPhone|iPod/.test(navigator.userAgent);
+
+  const { logout } = useContext(AuthContext);
 
   return (
     <div className="navbar">
@@ -100,74 +88,82 @@ export default function NavBar(props) {
             disableDiscovery={iOS}
             transitionDuration={160}
           >
-            <Box sx={{ width: 200 }} role="presentation">
-              <img src={logo} className="lnmiit-logo-sidebar" />
+            <Box sx={{ width: "100%", maxwidth: 300 }} role="presentation">
+              <img
+                src={logo}
+                className="lnmiit-logo-sidebar"
+                style={{ height: "80px" }}
+              />
               <Divider />
-              <List>
-                <ListItem
-                  button
-                  key="Home"
-                  onClick={() => {
-                    toggleSidebar();
-                    navigate("/home", { replace: false });
-                  }}
-                >
-                  <ListItemIcon>
-                    <HomeIcon />
-                  </ListItemIcon>
-                  <ListItemText primary="Home" />
+              <List sx={{ paddingRight: 8 }}>
+                <ListItem key="Home">
+                  <ListItemButton
+                    sx={{ padding: 0 }}
+                    onClick={() => {
+                      toggleSidebar();
+                      navigate("/home", { replace: false });
+                    }}
+                  >
+                    <ListItemIcon>
+                      <HomeIcon />
+                    </ListItemIcon>
+                    <ListItemText primary="Home" />
+                  </ListItemButton>
                 </ListItem>
 
-                <ListItem
-                  button
-                  key="Labs"
-                  onClick={() => {
-                    toggleSidebar();
-                    navigate("/labs", { replace: false });
-                  }}
-                >
-                  <ListItemIcon>
-                    <ScienceIcon />
-                  </ListItemIcon>
-                  <ListItemText primary="Labs" />
+                <ListItem key="Labs">
+                  <ListItemButton
+                    sx={{ padding: 0 }}
+                    onClick={() => {
+                      toggleSidebar();
+                      navigate("/labs", { replace: false });
+                    }}
+                  >
+                    <ListItemIcon>
+                      <ScienceIcon />
+                    </ListItemIcon>
+                    <ListItemText primary="Labs" />
+                  </ListItemButton>
                 </ListItem>
 
-                <ListItem
-                  button
-                  key="Discuss"
-                  onClick={() => {
-                    toggleSidebar();
-                    navigate("/discuss", { replace: false });
-                  }}
-                >
-                  <ListItemIcon>
-                    <ForumIcon />
-                  </ListItemIcon>
-                  <ListItemText primary="Discussions" />
+                <ListItem key="Discuss">
+                  <ListItemButton
+                    sx={{ padding: 0 }}
+                    onClick={() => {
+                      toggleSidebar();
+                      navigate("/discuss", { replace: false });
+                    }}
+                  >
+                    <ListItemIcon>
+                      <ForumIcon />
+                    </ListItemIcon>
+                    <ListItemText primary="Discussions" />
+                  </ListItemButton>
                 </ListItem>
 
-                <ListItem
-                  button
-                  key="About"
-                  onClick={() => {
-                    toggleSidebar();
-                    navigate("/about", { replace: true });
-                  }}
-                >
-                  <ListItemIcon>
-                    <AutoStoriesIcon />
-                  </ListItemIcon>
-                  <ListItemText primary="About" />
+                <ListItem key="About">
+                  <ListItemButton
+                    sx={{ padding: 0 }}
+                    onClick={() => {
+                      toggleSidebar();
+                      navigate("/about", { replace: true });
+                    }}
+                  >
+                    <ListItemIcon>
+                      <AutoStoriesIcon />
+                    </ListItemIcon>
+                    <ListItemText primary="About" />
+                  </ListItemButton>
                 </ListItem>
               </List>
             </Box>
           </SwipeableDrawer>
           <MenuIcon
-            style={{
-              paddingTop: "20px",
-              fontSize: "3em",
+            sx={{
+              fontSize: 30,
+              marginTop: 2,
+              marginRight: 2.5,
               color: "#6e6e6e",
-              marginRight: "10px",
             }}
             onClick={toggleSidebar}
           />

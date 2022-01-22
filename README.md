@@ -1,4 +1,4 @@
-# LNMIIT Virtual Labs
+# Virtual Labs
 
 ![Virtual Labs](./misc/system_design.png)
 
