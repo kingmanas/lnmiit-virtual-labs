@@ -7,7 +7,7 @@ const labController = require("../controllers/lab.controller");
 // show 20 labs on each page, supporting pagination
 router.get(/^\/labs?\/(\w+)$/, labController.fetchLabs);
 router.get(/^\/lab\/(\w+)\/(problems)?$/, labController.fetchLabProblems);
-router.get(/^lab\/(\w+)\/problem\/(\w+)$/, labController.fetchProblem);
+router.get("/lab/:lab_id/problem/:problem_id", labController.fetchProblem);
 
 router.post("/create/lab", (req, res, next) => {
   if (req.role != "ADMIN") return res.status(403).send("FORBIDDEN_RESOURCE");

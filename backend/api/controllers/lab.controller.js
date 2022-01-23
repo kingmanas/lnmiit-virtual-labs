@@ -1,20 +1,5 @@
 const { LabSession, User, Problem } = require("../models/models");
 
-function verifyLabAdmins(admins) {
-  let verified = true;
-  admins.every((admin) => {
-    User.findOne({ username: admin })
-      .then((docs) => {
-        if (!docs) verified = false;
-      })
-      .catch((err) => {
-        console.log(err);
-        verified = false;
-      });
-  });
-  return verified;
-}
-
 module.exports = {
   // the size of each page is 20
   fetchLabs: (req, res) => {
@@ -29,15 +14,33 @@ module.exports = {
 
   fetchLabProblems: async (req, res) => {
     const lab_id = req.params[0];
-    const docs = await Problem.findOne({ lab_id: lab_id });
-    console.log(docs);
+
+    Problem.findOne(
+      { lab_id: lab_id },
+      "problem_id problem_name score",
+      (err, docs) => {
+        if (err) return res.status(403).send("LAB_NOT_FOUND");
+        res.json(docs).send();
+      }
+    );
   },
 
   fetchProblem: (req, res) => {
-    const lab_id = req.params[0];
-    const problem_id = req.params[1];
+    const lab_id = req.params.lab_id;
+    const problem_id = req.params.problem_id;
 
-    console.log(req.originalUrl);
+    console.log(`${req.username} opened ${req.originalUrl}`);
+
+    Problem.findOne(
+      { lab_id: lab_id, problem_id: problem_id },
+      "lab_id problem_id problem_name problem_setter" +
+        "difficulty score memory_limit time_limit " +
+        "visible_input visible_output problem_statement",
+      (err, docs) => {
+        if (err) return res.status(403).send("PROBLEM_NOT_FOUND");
+        res.json(docs).send();
+      }
+    );
   },
 
   createLab: (req, res) => {
@@ -48,11 +51,7 @@ module.exports = {
     lab.end_time = req.body.end_time;
     lab.admins = req.body.admins;
 
-    if (
-      lab.start_time >= lab.end_time ||
-      lab.start_time < Date.now() ||
-      !verifyLabAdmins(lab.admins)
-    ) {
+    if (lab.start_time >= lab.end_time || lab.start_time < Date.now()) {
       console.log("INVALID_LAB");
       return res.status(403).send("INVALID_LAB");
     }
@@ -72,12 +71,17 @@ module.exports = {
     problem.problem_name = req.body.problem_name;
     problem.problem_setter = req.body.problem_setter;
     problem.difficulty = req.body.difficulty;
+    problem.score = req.body.score;
     problem.memory_limit = req.body.memory_limit;
     problem.time_limit = req.body.time_limit;
 
-    Problem.updateOne({ lab_id: problem.lab_id, problem_id: problem.problem_id}, problem, {
-      upsert: true,
-    })
+    Problem.updateOne(
+      { lab_id: problem.lab_id, problem_id: problem.problem_id },
+      problem,
+      {
+        upsert: true,
+      }
+    )
       .then(() => console.log("Problem added..."))
       .catch(console.log);
 

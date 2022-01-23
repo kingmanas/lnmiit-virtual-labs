@@ -29,6 +29,7 @@ app.use(cookieParser());
 // routes
 app.use("/auth", authRouter);
 app.use("/api", tokenVerificationMiddleware, apiRouter);
+// app.use("/api", apiRouter);
 
 app.listen(port, (err) => {
   if (err) console.log(err);

@@ -38,7 +38,7 @@ export default function CreateProblem() {
   function handleSubmit() {
     axios({
       method: "post",
-      url: "http://localhost:8001/api/problem/create",
+      url: "http://localhost:8001/api/create/problem",
       data: state,
       withCredentials: true,
     })
