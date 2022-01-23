@@ -6,7 +6,10 @@ const Problem = require("./problem");
 
 const LabSession = new Schema({
   // subject
-  subject: { type: Schema.Types.ObjectId, ref: "Subject" },
+  subject: String,
+
+  // this will be auto increment in nature
+  lab_id: Number,
 
   // lab title
   title: String,
@@ -28,9 +31,7 @@ const LabSession = new Schema({
   },
 
   // The people who can view, modify and delete lab contests.
-  admins: [User],
-
-  problems: [Problem],
+  admins: [String],
 });
 
 module.exports = LabSession;

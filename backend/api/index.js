@@ -6,7 +6,10 @@ const cookieParser = require("cookie-parser");
 require("dotenv").config();
 
 const authRouter = require("./routes/auth.route");
-// const apiRouter = require("./routes/api.route");
+const apiRouter = require("./routes/api.route");
+const {
+  tokenVerificationMiddleware,
+} = require("./middlewares/auth.middleware");
 
 const port = process.env.PORT || 8001;
 
@@ -25,7 +28,7 @@ app.use(cookieParser());
 
 // routes
 app.use("/auth", authRouter);
-// app.use("/api", apiRouter);
+app.use("/api", tokenVerificationMiddleware, apiRouter);
 
 app.listen(port, (err) => {
   if (err) console.log(err);

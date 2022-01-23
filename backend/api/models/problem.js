@@ -1,15 +1,16 @@
 "use-strict";
 
 const Schema = require("mongoose").Schema;
-const User = require("./user");
 
 const Problem = new Schema({
   // a foreign key
-  lab_session: { type: Schema.Types.ObjectId, ref: "LabSession" },
+  lab_id: String,
+
+  problem_id: String,
 
   problem_name: String,
 
-  problem_setter: [User],
+  problem_setter: [String],
 
   difficulty: {
     type: String,
@@ -26,14 +27,12 @@ const Problem = new Schema({
   // in milliseconds per test case
   time_limit: { type: Number, max: 5000 },
 
-  // path to file on server
+  // two controllers: addProblem & refreshProblem
+  // will read from the static dir based on the
+  // naming convention and create entries in the database
   problem_statement: String,
-
-  // path to files on server
   visible_input: [String],
   visible_output: [String],
-
-  // path to files on server
   hidden_input: [String],
   hidden_output: [String],
 });

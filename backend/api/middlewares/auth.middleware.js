@@ -1,7 +1,6 @@
 const config = require("../config/auth.config");
-const crypto = require("crypto-js");
 const jwt = require("jsonwebtoken");
-const User = require("../models/user");
+const { User } = require("../models/models");
 const { refresh } = require("../controllers/auth.controller");
 
 module.exports = {
@@ -9,16 +8,22 @@ module.exports = {
     let token = req.cookies["x-access-token"];
 
     if (!token) {
-      next("NO_TOKEN");
+      return res.status(401).send({ message: "NO_TOKEN" });
     }
 
-    token = crypto.AES.decrypt(token, config.cookie_encryption_key);
-
     try {
+      const unverifiedPayload = jwt.decode(token, config.jwt_signing_key);
+
+      req.username = unverifiedPayload.username;
+      req.role = unverifiedPayload.role;
+      req.claims = unverifiedPayload.claims;
+
       jwt.verify(token, config.jwt_signing_key, (err, decoded) => {
         // if it's an error we'll try refreshing the token
         // using the existing refresh token
+
         if (err) {
+          console.log("VERIFICATION_ERROR_SO_REFRESHING");
           return refresh(req, res);
         }
 
@@ -27,10 +32,7 @@ module.exports = {
             if (err) {
               throw err;
             }
-            req.username = doc.username;
-            req.role = doc.role;
-            req.claims = doc.claims;
-            console.log(`Verify token: ${req.username}`);
+            console.log(`Verifed token: ${req.username}`);
             next();
           });
         } catch (err) {
@@ -38,7 +40,7 @@ module.exports = {
         }
       });
     } catch (err) {
-      next(err);
+      return next(err);
     }
   },
 };

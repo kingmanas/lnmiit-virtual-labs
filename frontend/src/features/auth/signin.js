@@ -14,7 +14,7 @@ import Container from "@material-ui/core/Container";
 import LnmiitLogo from "../../assets/lnmiit_logo-01.png";
 import { GoogleLogin } from "react-google-login";
 import axios from "axios";
-import { AuthContext } from "../../authContext";
+import { AuthContext } from "../../contexts/authContext";
 
 export function Copyright() {
   return (
@@ -74,28 +74,7 @@ export default function SignIn() {
       });
   };
 
-  const { setCurrentUser, setIsLoading } = useContext(AuthContext);
-
-  const googleResponse = async (response) => {
-    setIsLoading(true);
-    const res = await axios({
-      method: "post",
-      url: "http://localhost:8001/auth/login",
-      data: {
-        google_token: response.tokenId,
-      },
-      withCredentials: true,
-    });
-    console.log(res);
-    if (!res) {
-      console.log("GOOGLE_LOGIN_FAILED");
-    } else {
-      setCurrentUser(res.data.username);
-      console.log(res.data.username + " logged in.");
-    }
-    navigate("/home", { replace: true });
-    setIsLoading(false);
-  };
+  const { googleLogin } = useContext(AuthContext);
 
   return (
     <Container component="main" maxWidth="xs" style={{ height: "100%" }}>
@@ -167,7 +146,7 @@ export default function SignIn() {
         <GoogleLogin
           clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID}
           buttonText="Sign in with Google"
-          onSuccess={googleResponse}
+          onSuccess={googleLogin}
           onFailure={() => {
             alert("Sign in failed!");
           }}

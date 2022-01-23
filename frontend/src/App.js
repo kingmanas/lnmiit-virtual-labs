@@ -8,10 +8,13 @@ import NavBar from "./features/navbar/navbar";
 import NotFound from "./features/404/404";
 import SignIn from "./features/auth/signin";
 import SignUp from "./features/auth/signup";
-import { PrivateRoute } from "./authContext";
+import { AuthContext, PrivateRoute } from "./contexts/authContext";
 import Labs from "./features/labs/labs";
 import Home from "./features/home/home";
 import ProblemStatement from "./features/editor/problemStatement";
+import ProblemEditor from "./features/editor/problemEditor";
+import CreateLab from "./features/admin/createLab";
+import CreateProblem from "./features/admin/createProblem";
 
 function NavRoute({ children }) {
   return (
@@ -23,11 +26,20 @@ function NavRoute({ children }) {
 }
 
 export default function App() {
+  const { currentUser, logout } = useContext(AuthContext);
+
   return (
     <>
       <Routes>
-        <Route path="/login" element={<SignIn />} />
-        <Route path="/register" element={<SignUp />} />
+        <Route
+          path="/login"
+          element={!currentUser ? <SignIn /> : <Navigate to="/" />}
+        />
+
+        <Route
+          path="/register"
+          element={!currentUser ? <SignUp /> : <Navigate to="/" />}
+        />
 
         {/* HOME */}
         <Route
@@ -39,6 +51,7 @@ export default function App() {
             </PrivateRoute>
           }
         />
+
         <Route
           path="/home"
           element={
@@ -54,21 +67,52 @@ export default function App() {
         <Route
           path="/labs"
           element={
-            <PrivateRoute>
-              <NavRoute>
+            <NavRoute>
+              <PrivateRoute>
                 <Labs />
-              </NavRoute>
-            </PrivateRoute>
+              </PrivateRoute>
+            </NavRoute>
           }
         />
 
         <Route
           path="/lab/:lab_id/problem/:problem_id"
-          element={<PrivateRoute><ProblemStatement /></PrivateRoute>}
+          element={
+            <PrivateRoute>
+              <ProblemStatement />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/editor"
+          element={
+            <PrivateRoute>
+              <ProblemEditor />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/create/lab"
+          element={
+            <PrivateRoute>
+              <CreateLab />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/create/problem"
+          element={
+            <PrivateRoute>
+              <CreateProblem />
+            </PrivateRoute>
+          }
         />
 
         {/* 404 */}
-        <Route element={<NotFound />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </>
   );
