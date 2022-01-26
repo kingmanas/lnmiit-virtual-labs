@@ -31,45 +31,26 @@ services:
         source: ./frontend
         target: /frontend
 
-  checker:
-    build: ./checker
-    restart: always
-    environment:
-      - PORT=9000
-    depends_on:
-      - api_server
-      - mongo
-      - redis
-    volumes:
-      - type: bind
-        source: ./checker
-        target: /checker
-
-  # code_evaluator:
-  #   build: ./backend/code_evaluator
+  # checker:
+  #   build: ./checker
+  #   restart: always
   #   environment:
-  #     - PORT=8083
-  #   ports:
-  #     - 8083:8083
+  #     - PORT=9000
   #   depends_on:
-  #     - redis
+  #     - api_server
   #     - mongo
-
-  mongo_express:
-    image: mongo-express
-    restart: always
-    env_file:
-      - ./backend/webconfig.env
-    ports:
-      - 8081:8081
-    depends_on:
-      - mongo
+  #     - redis
+  #   volumes:
+  #     - type: bind
+  #       source: ./checker
+  #       target: /checker
 
   mongo:
     image: mongo:latest
     restart: always
-    env_file:
-      - ./backend/webconfig.env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
     ports:
       - 27017:27017
     volumes:

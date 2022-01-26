@@ -6,7 +6,7 @@ import TextField from "@mui/material/TextField";
 import AdapterDateFns from "@mui/lab/AdapterDateFns";
 import LocalizationProvider from "@mui/lab/LocalizationProvider";
 import DateTimePicker from "@mui/lab/DateTimePicker";
-import { Autocomplete, Button, Stack } from "@mui/material";
+import { Button, Stack } from "@mui/material";
 import axios from "axios";
 
 export default function CreateLab() {

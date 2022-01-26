@@ -6,41 +6,66 @@ module.exports = {
     const page = req.params[0];
     if (page < 0) return res.send(403).status("PAGE_LESS_THAN_ZERO");
 
-    LabSession.find({}, null, { limit: 20, skip: 20 * page }, (err, doc) => {
+    LabSession.find({}, null, { limit: 20, skip: 20 * page }, (err, docs) => {
       if (err) console.log(err);
-      else return res.json(doc).send();
+      const access_controlled_docs = [];
+      const current_time = Date.now();
+
+      // Either you are an admin or the lab time is
+      // over, so you'll be able to view those labs
+      docs.forEach((doc) => {
+        if (
+          doc.admins.indexOf(req.username) != -1 ||
+          current_time > doc.end_time
+        )
+          access_controlled_docs.push(doc);
+      });
+
+      return res.json(access_controlled_docs).send();
     });
   },
 
   fetchLabProblems: async (req, res) => {
     const lab_id = req.params[0];
 
-    Problem.findOne(
-      { lab_id: lab_id },
-      "problem_id problem_name score",
-      (err, docs) => {
-        if (err) return res.status(403).send("LAB_NOT_FOUND");
-        res.json(docs).send();
-      }
-    );
+    // Don't let them fetch problems before the labs starts
+    const current_time = Date.now();
+    LabSession.findOne({ lab_id: lab_id }, "admins end_time", (err, doc) => {
+      if (doc.end_time > current_time && doc.admins.indexOf(req.username) == -1)
+        return res.status(403).status("LAB_NOT_YET_STARTED");
+
+      Problem.findOne(
+        { lab_id: lab_id },
+        "problem_id problem_name score",
+        (err, docs) => {
+          if (err) return res.status(403).send("LAB_NOT_FOUND");
+          res.json(docs).send();
+        }
+      );
+    });
   },
 
   fetchProblem: (req, res) => {
     const lab_id = req.params.lab_id;
     const problem_id = req.params.problem_id;
 
-    console.log(`${req.username} opened ${req.originalUrl}`);
+    // Don't let them fetch problems before the labs starts
+    const current_time = Date.now();
+    LabSession.findOne({ lab_id: lab_id }, "admins end_time", (err, doc) => {
+      if (doc.end_time > current_time && doc.admins.indexOf(req.username) == -1)
+        return res.status(403).status("LAB_NOT_YET_STARTED");
 
-    Problem.findOne(
-      { lab_id: lab_id, problem_id: problem_id },
-      "lab_id problem_id problem_name problem_setter" +
-        "difficulty score memory_limit time_limit " +
-        "visible_input visible_output problem_statement",
-      (err, docs) => {
-        if (err) return res.status(403).send("PROBLEM_NOT_FOUND");
-        res.json(docs).send();
-      }
-    );
+      Problem.findOne(
+        { lab_id: lab_id, problem_id: problem_id },
+        "lab_id problem_id problem_name problem_setter" +
+          "difficulty score memory_limit time_limit " +
+          "visible_input visible_output problem_statement",
+        (err, docs) => {
+          if (err) return res.status(403).send("PROBLEM_NOT_FOUND");
+          res.json(docs).send();
+        }
+      );
+    });
   },
 
   createLab: (req, res) => {

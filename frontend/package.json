@@ -24,7 +24,8 @@
     "react-scripts": "5.0.0"
   },
   "scripts": {
-    "start": "HTTPS=true SSL_CERT_FILE=./ssl/server.cert SSL_KEY_FILE=./ssl/server.key react-scripts start",
+    "start": "react-scripts start",
+    "https-start": "HTTPS=true SSL_CERT_FILE=./ssl/server.cert SSL_KEY_FILE=./ssl/server.key react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"

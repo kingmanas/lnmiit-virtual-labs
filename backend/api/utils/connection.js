@@ -1,5 +1,6 @@
 const redis = require("redis");
 const mongoose = require("mongoose");
+require("dotenv").config({ path: __dirname + "/.env" });
 
 let _db, _redis;
 
@@ -21,7 +22,8 @@ function createRedisClient() {
 
 function createMongoClient() {
   try {
-    mongoose.connect(`mongodb://mongo:27017/vlabs`, {
+    const mongoUrl = `mongodb://${process.env.MONGO_ROOT_USERNAME}:${process.env.MONGO_ROOT_PASSWORD}@mongo:27017/vlabs?authSource=admin`;
+    mongoose.connect(mongoUrl, {
       useUnifiedTopology: true,
       useNewUrlParser: true,
       retryWrites: true,

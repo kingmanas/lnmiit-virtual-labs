@@ -19,9 +19,9 @@ router.post("/login", (req, res) => {
   }
 
   // conventional login
-  if (!req.body.google_token) authController.signIn(req, res);
+  if (req.body.google_token) authController.gAuth(req, res);
   // gAuth
-  else authController.gAuth(req, res);
+  else authController.signIn(req, res);
 });
 
 router.post("/logout", tokenVerificationMiddleware, authController.logout);

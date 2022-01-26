@@ -28,6 +28,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const googleLogin = (response) => {
+    setIsLoading(true);
     axios({
       method: "post",
       url: "http://localhost:8001/auth/login",
