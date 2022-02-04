@@ -4,9 +4,11 @@
 const router = require("express").Router();
 const labController = require("../controllers/lab.controller");
 
+router.get("/lab/page_count", labController.labPageCount);
 // show 20 labs on each page, supporting pagination
-router.get(/^\/labs?\/(\w+)$/, labController.fetchLabs);
-router.get(/^\/lab\/(\w+)\/(problems)?$/, labController.fetchLabProblems);
+router.get("/lab/:page_id", labController.fetchLabs);
+
+router.get("/lab/:lab_id/problems", labController.fetchLabProblems);
 router.get("/lab/:lab_id/problem/:problem_id", labController.fetchProblem);
 
 router.post("/create/lab", (req, res, next) => {

@@ -11,13 +11,13 @@ export const AuthContext = React.createContext();
 export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
+  const [role, setRole] = useState(null);
 
   const checkAuth = async () => {
     const res = await axios({
       method: "post",
       url: "http://localhost:8001/auth/verify",
       timeout: 2000,
-      retries: 3,
       withCredentials: true,
     });
     if (res) {
@@ -39,6 +39,7 @@ export const AuthProvider = ({ children }) => {
     })
       .then((res) => {
         setCurrentUser(res.data.username);
+        setRole(res.data.role);
         setIsLoading(false);
         console.log(res.data.username + " logged in.");
       })
@@ -61,19 +62,32 @@ export const AuthProvider = ({ children }) => {
       .catch((err) => console.log(err));
 
     setCurrentUser(null);
+    setRole(null);
     setIsLoading(false);
   };
 
   useEffect(() => {
     checkAuth()
-      .then((res) => setCurrentUser(res.data.username))
-      .catch(() => setCurrentUser(null))
+      .then((res) => {
+        setCurrentUser(res.data.username);
+        setRole(res.data.role);
+      })
+      .catch(() => {
+        setCurrentUser(null);
+        setRole(null);
+      })
       .then(() => setIsLoading(false));
-  }, []);
+  }, [currentUser]);
 
   return (
     <AuthContext.Provider
-      value={{ currentUser, isLoading, setCurrentUser, logout, googleLogin }}
+      value={{
+        role,
+        currentUser,
+        isLoading,
+        googleLogin,
+        logout,
+      }}
     >
       {children}
     </AuthContext.Provider>

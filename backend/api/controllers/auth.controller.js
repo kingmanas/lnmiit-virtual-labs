@@ -8,9 +8,14 @@ const { User } = require("../models/models");
 const validator = require("validator");
 const { OAuth2Client } = require("google-auth-library");
 
-function generateAccessToken(username, verifyToken, callback_) {
-  User.findOne({ username: username }, (err, docs) => {
-    if (err && verifyToken == true) {
+function generateAccessToken(req, res, verifyUser, callback_) {
+  const username = req.username;
+  if (!username) callback_("NO_USERNAME", null);
+
+  verifyUser = verifyUser || true;
+
+  User.findOne({ username: req.username }, (err, docs) => {
+    if (err && verifyUser == true) {
       console.log(username + " USER_NOT_FOUND");
       return callback_(err, null);
     } else {
@@ -23,7 +28,6 @@ function generateAccessToken(username, verifyToken, callback_) {
             expiresIn: config.jwt_expiry_time,
           }
         );
-
         callback_(null, token);
       } catch (err) {
         callback_(err, null);
@@ -32,17 +36,14 @@ function generateAccessToken(username, verifyToken, callback_) {
   });
 }
 
-function generateRefreshToken(username, expireTime, callback_) {
-  expireTime = expireTime || 6 * 60 * 60;
-
+function generateRefreshToken(req, res, callback_) {
   const refresh_token = crypto.randomBytes(64).toString("hex");
-
   try {
     redis.set(
       refresh_token,
-      username,
+      req.username,
       "EX",
-      expireTime,
+      config.refresh_token_expiry_time,
       callback_(null, refresh_token)
     );
   } catch (err) {
@@ -50,38 +51,31 @@ function generateRefreshToken(username, expireTime, callback_) {
   }
 }
 
-function tokenUtility(req, verifyUser, res) {
-  verifyUser = verifyUser || true;
-
-  const username = req.username;
-
-  generateAccessToken(username, verifyUser, (err, access_token) => {
+function tokenUtility(req, res, verifyUser) {
+  generateAccessToken(req, res, verifyUser, (err, access_token) => {
     if (err) {
       console.log(err);
       res.status(403).send("ACCESS_TOKEN_FAILED");
       return;
     }
-
     res.cookie("x-access-token", access_token, {
       httpOnly: true,
       secure: true,
     });
 
-    generateRefreshToken(username, null, (err, refresh_token) => {
+    generateRefreshToken(req, res, (err, refresh_token) => {
       if (err) {
         console.log(err);
         res.status(403).send("REFRESH_TOKEN_FAILED");
         return;
       }
-
       res.cookie("x-refresh-token", refresh_token, {
         httpOnly: true,
         secure: true,
       });
 
-      console.log(`${username} logged in.`);
-      res.json({ username: username });
-      res.send();
+      console.log(`${req.username} logged in.`);
+      return res.json({ username: req.username, role: req.role });
     });
   });
 }
@@ -189,7 +183,9 @@ module.exports = {
         if (!compareSync(passwd, result.hashed_password)) {
           res.status(401).send("WRONG_PASSWORD");
         } else {
-          tokenUtility(req, null, res);
+          req.username = result.username;
+          req.role = result.role;
+          tokenUtility(req, res);
         }
       }
     });
@@ -217,7 +213,7 @@ module.exports = {
       }
     });
 
-    tokenUtility(req, null, res);
+    tokenUtility(req, res);
     return;
   },
 
@@ -259,7 +255,7 @@ module.exports = {
         console.log(req.role);
       });
 
-      return tokenUtility(req, false, res);
+      return tokenUtility(req, res, false);
     } catch (err) {
       return res.status(403).send("GAUTH_ERROR");
     }

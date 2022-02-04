@@ -8,7 +8,7 @@ const {
 
 // POST
 router.post("/verify", tokenVerificationMiddleware, (req, res) => {
-  res.send({ username: req.username });
+  res.send({ username: req.username, role: req.role });
 });
 
 router.post("/login", (req, res) => {

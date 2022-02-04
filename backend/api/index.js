@@ -27,9 +27,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // routes
+app.use((req, res, next) => {
+  console.log(req.originalUrl);
+  next();
+});
 app.use("/auth", authRouter);
 app.use("/api", tokenVerificationMiddleware, apiRouter);
-// app.use("/api", apiRouter);
 
 app.listen(port, (err) => {
   if (err) console.log(err);

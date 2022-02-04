@@ -16,11 +16,13 @@ import {
   ListItemIcon,
   ListItemText,
   SwipeableDrawer,
+  Fade,
 } from "@mui/material";
 
 import { Box } from "@mui/system";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import AutoStoriesIcon from "@mui/icons-material/AutoStories";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import ForumIcon from "@mui/icons-material/Forum";
 import HomeIcon from "@mui/icons-material/Home";
 import LogoutIcon from "@mui/icons-material/Logout";
@@ -29,28 +31,42 @@ import ScienceIcon from "@mui/icons-material/Science";
 import { AuthContext } from "../../contexts/authContext";
 
 function NavBarMid() {
+  const { currentUser, role } = useContext(AuthContext);
+
+  useEffect(() => console.log(currentUser, role));
+
   return (
     <div className="navbar-middle">
-      <ul>
-        <li className="nav-element">
-          <Link to="/home">Home</Link>
-        </li>
-        <li className="nav-element">
-          <Link to="/labs">Labs</Link>
-        </li>
-        <li className="nav-element">
-          <Link to="/discuss">Discussions</Link>
-        </li>
-        <li className="nav-element">
-          <Link to="/about">About</Link>
-        </li>
-      </ul>
+      <Fade in>
+        <ul>
+          <li className="nav-element">
+            <Link to="/home">Home</Link>
+          </li>
+          <li className="nav-element">
+            <Link to="/labs">Labs</Link>
+          </li>
+          <li className="nav-element">
+            <Link to="/discuss">Discussions</Link>
+          </li>
+          <li className="nav-element">
+            <Link to="/about">About</Link>
+          </li>
+          {role === "ADMIN" ? (
+            <li className="nav-element">
+              <Link to="/admin">Admin</Link>
+            </li>
+          ) : (
+            ""
+          )}
+        </ul>
+      </Fade>
     </div>
   );
 }
+
 export default function NavBar(props) {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-  const { setCurrentUser, setIsLoading } = useContext(AuthContext);
+  const { role } = useContext(AuthContext);
   const navigate = useNavigate();
 
   // sidebar utility
@@ -153,6 +169,21 @@ export default function NavBar(props) {
                       <AutoStoriesIcon />
                     </ListItemIcon>
                     <ListItemText primary="About" />
+                  </ListItemButton>
+                </ListItem>
+
+                <ListItem key="Admin">
+                  <ListItemButton
+                    sx={{ padding: 0 }}
+                    onClick={() => {
+                      toggleSidebar();
+                      navigate("/admin", { replace: true });
+                    }}
+                  >
+                    <ListItemIcon>
+                      <AdminPanelSettingsIcon />
+                    </ListItemIcon>
+                    <ListItemText primary="Admin" />
                   </ListItemButton>
                 </ListItem>
               </List>

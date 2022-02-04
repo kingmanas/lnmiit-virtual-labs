@@ -11,10 +11,13 @@ import SignUp from "./features/auth/signup";
 import { AuthContext, PrivateRoute } from "./contexts/authContext";
 import Labs from "./features/labs/labs";
 import Home from "./features/home/home";
-import ProblemStatement from "./features/editor/problemStatement";
-import ProblemEditor from "./features/editor/problemEditor";
+import ProblemPage from "./features/labs/problemPage";
+
+// Admin panel features
+// TODO: Integrate into the admin panel and add a single link to /admin
 import CreateLab from "./features/admin/createLab";
 import CreateProblem from "./features/admin/createProblem";
+import ProblemStatementView from "./features/editor/problemStatement";
 
 function NavRoute({ children }) {
   return (
@@ -76,20 +79,13 @@ export default function App() {
         />
 
         <Route
-          path="/lab/:lab_id/problem/:problem_id"
+          path="/lab/:lab_id/problems"
           element={
-            <PrivateRoute>
-              <ProblemStatement />
-            </PrivateRoute>
-          }
-        />
-
-        <Route
-          path="/editor"
-          element={
-            <PrivateRoute>
-              <ProblemEditor />
-            </PrivateRoute>
+            <NavRoute>
+              <PrivateRoute>
+                <ProblemPage />
+              </PrivateRoute>
+            </NavRoute>
           }
         />
 
@@ -107,6 +103,15 @@ export default function App() {
           element={
             <PrivateRoute>
               <CreateProblem />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/lab/:lab_id/problem/:problem_id"
+          element={
+            <PrivateRoute>
+              <ProblemStatementView />
             </PrivateRoute>
           }
         />

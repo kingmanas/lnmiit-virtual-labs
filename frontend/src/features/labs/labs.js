@@ -7,86 +7,115 @@ import {
   TableBody,
   TableCell,
   Paper,
+  Button,
+  Chip,
+  Fade,
 } from "@mui/material";
-import axios from "axios";
+import "./lab.css";
 import { useEffect, useState } from "react";
+import { fetchLabs, labPageCount } from "./lab.client";
+import { useNavigate } from "react-router-dom";
 
 // depending on the access permissions the user will be
 // given a button to see the problems or a countdown timer
 // will be displayed over there
 
-function LabCountdown(props) {}
+function LabRow(props) {
+  const lab = props.lab;
 
-function LabRow() {}
+  const navigate = useNavigate();
+
+  return (
+    <TableRow
+      hover
+      onClick={() => {
+        navigate(`/lab/${lab.lab_id}/problems`);
+      }}
+    >
+      <TableCell>{lab.title}</TableCell>
+      <TableCell align="right">{lab.subject}</TableCell>
+      <TableCell align="right">
+        {lab.admins.map((admin, i) => (
+          <Chip key={i} label={admin} style={{ marginRight: "2px" }} />
+        ))}
+      </TableCell>
+      <TableCell align="right">{new Date(lab.start_time).toString()}</TableCell>
+      <TableCell align="right">
+        {(new Date(lab.end_time).getTime() -
+          new Date(lab.start_time).getTime()) /
+          (60 * 60 * 1000)}{" "}
+        h
+      </TableCell>
+    </TableRow>
+  );
+}
 
 export default function Labs() {
   // the pagination component
   const [state, setState] = useState({
-    pageCount: 5,
+    pageCount: 0,
     currentPage: 0,
     labs: [],
   });
 
-  useEffect(async () => {
-    const instance = axios.create({
-      withCredentials: true,
-      baseURL: "http://localhost:8001/api/lab",
-    });
-
-    const pageCount = await instance.get({ url: "/page_count" });
-    if (pageCount) setState({ ...state, pageCount: pageCount });
-
-    const labs = await instance.get({ url: `/${state.currentPage}` });
-    if (labs) setState({ ...state, labs: labs });
+  useEffect(() => {
+    // Get the page count
+    labPageCount()
+      .then((res) => setState({ ...state, pageCount: res.data.pageCount }))
+      .catch(console.log);
   }, []);
+
+  useEffect(() => {
+    // Fetch the labs for the current page
+    fetchLabs(state.currentPage)
+      .then((res) => {
+        setState({ state, labs: res.data });
+      })
+      .catch(console.log);
+  }, [state.currentPage]);
 
   return (
     <div className="lab-default">
-      <div className="lab-pagination">
-        <Pagination
-          count={state.pageCount}
-          page={state.currentPage + 1}
-          onChange={(e, v) => setState({ ...state, currentPage: v - 1 })}
-        />
-      </div>
-      <div className="lab-table">
-        <TableContainer component={Paper}>
-          <Table sx={{ minWidth: 650 }} aria-label="simple table">
+      <Fade in={true} timeout={300}>
+        <TableContainer
+          className="lab-table"
+          component={Paper}
+          style={{ minHeight: "700px" }}
+        >
+          <Table sx={{ minWidth: 400 }} aria-label="caption table">
             <TableHead>
               <TableRow>
-                <TableCell>Dessert (100g serving)</TableCell>
-                <TableCell align="right">Calories</TableCell>
-                <TableCell align="right">Fat&nbsp;(g)</TableCell>
-                <TableCell align="right">Carbs&nbsp;(g)</TableCell>
-                <TableCell align="right">Protein&nbsp;(g)</TableCell>
+                <TableCell>
+                  <b>Lab Title</b>
+                </TableCell>
+                <TableCell align="right">
+                  <b>Subject</b>
+                </TableCell>
+                <TableCell align="right">
+                  <b>Writers</b>
+                </TableCell>
+                <TableCell align="right">
+                  <b>Start Time</b>
+                </TableCell>
+                <TableCell align="right">
+                  <b>Length</b>
+                </TableCell>
               </TableRow>
             </TableHead>
-            {/* <TableBody>
-              {rows.map((row) => (
-                <TableRow
-                  key={row.name}
-                  sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
-                >
-                  <TableCell component="th" scope="row">
-                    {row.name}
-                  </TableCell>
-                  <TableCell align="right">{row.calories}</TableCell>
-                  <TableCell align="right">{row.fat}</TableCell>
-                  <TableCell align="right">{row.carbs}</TableCell>
-                  <TableCell align="right">{row.protein}</TableCell>
-                </TableRow>
+            <TableBody>
+              {state.labs.map((lab, i) => (
+                <LabRow lab={lab} key={i} />
               ))}
-            </TableBody> */}
+            </TableBody>
           </Table>
         </TableContainer>
-      </div>
-      <div className="lab-pagination">
-        <Pagination
-          count={state.pageCount}
-          page={state.currentPage + 1}
-          onChange={(e, v) => setState({ ...state, currentPage: v - 1 })}
-        />
-      </div>
+      </Fade>
+      <Pagination
+        style={{ display: "flex", justifyContent: "center", marginTop: "1em" }}
+        count={state.pageCount}
+        page={state.currentPage + 1}
+        onChange={(e, v) => setState({ ...state, currentPage: v - 1 })}
+      />
     </div>
   );
 }
